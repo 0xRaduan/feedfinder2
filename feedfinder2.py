@@ -127,10 +127,63 @@ def find_feeds(url, check_all=False, user_agent=None, timeout=None):
         return sort_urls(urls)
 
     # Guessing potential URLs.
-    fns = ["atom.xml", "index.atom", "index.rdf", "rss.xml", "index.xml",
-           "index.rss", "rss", "feed"]
-    urls += list(filter(finder.is_feed, [urlparse.urljoin(url, f)
-                                         for f in fns]))
+    logging.info("Guessing potential feed URLs.")
+    parsed_url = urlparse.urlsplit(url)
+    scheme = parsed_url.scheme
+    netloc = parsed_url.netloc
+    root_url = "{0}://{1}/".format(scheme, netloc)
+    
+    # urlparse.urljoin(url, ".") correctly gives the "directory" of the current URL
+    # e.g., http://example.com/foo/bar.html -> http://example.com/foo/
+    # e.g., http://example.com/foo/ -> http://example.com/foo/
+    # e.g., http://example.com -> http://example.com/ (if it was coerced to http://example.com/)
+    # However, if url is http://example.com (no trailing slash), urljoin(url, ".") is http://example.com/
+    # and urljoin(url, "atom.xml") is http://example.com/atom.xml.
+    # If url is http://example.com/blog, urljoin(url, "atom.xml") is http://example.com/atom.xml (wrong!)
+    # We need to ensure the base for relative leaf resolution is the actual directory.
+    # A common way to get the directory is to join with "./" or ensure url ends with "/" if it's path-like
+    
+    current_dir_url = urlparse.urljoin(url, "./") # Ensures it's a directory
+
+    leaf_filenames = [
+        "feed.xml", "atom.xml", "rss.xml", "feed", "rss", "atom",
+        "index.xml", "index.atom", "index.rss", "index.rdf",
+        "feed.json", "rss.json", "wp-rss2.xml", "feeds/posts/default",
+        "blog.xml"
+    ]
+    common_root_subdirectories = [
+        "feed/", "feeds/", "rss/", "atom/", "blog/", "news/", "updates/", "comments/"
+    ]
+
+    guessed_urls = []
+
+    # b. Leaf patterns relative to the input URL's directory
+    for leaf in leaf_filenames:
+        guessed_urls.append(urlparse.urljoin(current_dir_url, leaf))
+
+    # c. Leaf patterns relative to the root
+    for leaf in leaf_filenames:
+        guessed_urls.append(urlparse.urljoin(root_url, leaf))
+
+    # d. Common root subdirectories (as feeds themselves)
+    for subdir in common_root_subdirectories:
+        guessed_urls.append(urlparse.urljoin(root_url, subdir))
+
+    # e. Leaf patterns within common root subdirectories
+    for subdir in common_root_subdirectories:
+        base_subdir_url = urlparse.urljoin(root_url, subdir)
+        for leaf in leaf_filenames:
+            guessed_urls.append(urlparse.urljoin(base_subdir_url, leaf))
+            
+    # Remove duplicates
+    unique_guessed_urls = sorted(list(set(guessed_urls)))
+    
+    # Filter and add to the main list
+    if unique_guessed_urls:
+        logging.info("Trying {0} guessed URLs.".format(len(unique_guessed_urls)))
+        urls += list(filter(finder.is_feed, unique_guessed_urls))
+        logging.info("Found {0} feeds through guessing.".format(len(urls))) # This count is cumulative, might be better to log count from this step
+
     return sort_urls(urls)
 
 
