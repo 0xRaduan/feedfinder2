@@ -38,4 +38,4 @@ jobs:
 
     - name: Test with unittest
       run: |
-        python -m unittest test_feedfinder2.py
+        uv run python -m unittest test_feedfinder2.py
