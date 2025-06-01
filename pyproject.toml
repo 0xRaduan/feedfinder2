@@ -1,8 +1,13 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+backend-path = ["."]
+
 [project]
-name = "app"
-version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
+name = "feedfinder2"
+dynamic = ["version"]
+description = "Find the feed URLs for a website."
+readme = "README.rst"
 requires-python = ">=3.10"
 dependencies = [
     "beautifulsoup4>=4.13.4",

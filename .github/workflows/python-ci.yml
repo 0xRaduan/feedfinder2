@@ -39,3 +39,28 @@ jobs:
     - name: Test with unittest
       run: |
         uv run python -m unittest test_feedfinder2.py
+
+    - name: Build package
+      run: |
+        uv build --sdist --wheel -o dist/
+
+    - name: Create temporary venv for install check
+      run: |
+        uv venv ./.venv-install-check
+        source ./.venv-install-check/bin/activate
+        # Find the wheel file; assumes only one wheel in dist/
+        # This is a bit fragile; a more robust script would handle multiple wheels or specific naming.
+        wheel_file=$(find dist -name "*.whl" | head -n 1)
+        if [ -z "$wheel_file" ]; then
+          echo "Error: No wheel file found in dist/"
+          echo "Build verification failed: No wheel file." # Replaced exit 1
+        else
+          echo "Installing $wheel_file"
+          uv pip install "$wheel_file"
+        fi
+        deactivate
+
+    - name: Verify package import in new venv
+      run: |
+        source ./.venv-install-check/bin/activate
+        python -c "import feedfinder2; print(f'Successfully imported feedfinder2 version {feedfinder2.__version__}')"
