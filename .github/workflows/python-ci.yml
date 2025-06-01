@@ -22,19 +22,22 @@ jobs:
       run: |
         curl -LsSf https://astral.sh/uv/install.sh | sh
         echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+        echo "$HOME/.local/bin" >> $GITHUB_PATH # Ensure uv's shims/binaries are in PATH
 
-    - name: Install dependencies
+    - name: Install dependencies (including dev)
       run: |
-        uv sync
+        uv sync --all-dev # Attempting with --all-dev based on common patterns, will verify
 
     - name: Lint with ruff
       run: |
-        ruff check .
+        uv run ruff check .
 
     - name: Check formatting with ruff
       run: |
-        ruff format --check .
+        uv run ruff format --check .
 
     - name: Test with unittest
       run: |
-        python -m unittest test_feedfinder2.py
+        python -m unittest test_feedfinder2.py # Assuming tests might need direct python execution
+                                           # If tests also need ruff or other dev deps,
+                                           # this might need 'uv run python -m unittest...'
