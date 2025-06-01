@@ -1,6 +1,6 @@
 import os
 import sys
-from setuptools import setup # Moved to top
+from setuptools import setup  # Moved to top
 
 if sys.argv[-1] == "publish":
     os.system("python setup.py sdist upload")
