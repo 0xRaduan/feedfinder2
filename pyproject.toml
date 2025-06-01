@@ -5,7 +5,7 @@ backend-path = ["."]
 
 [project]
 name = "feedfinder2"
-dynamic = ["version"]
+dynamic = ["version", "authors", "license", "classifiers"]
 description = "Find the feed URLs for a website."
 readme = "README.rst"
 requires-python = ">=3.10"
