@@ -30,7 +30,6 @@ def coerce_url(url):
 
 
 class FeedFinder(object):
-
     def __init__(self, user_agent=None, timeout=None):
         if user_agent is None:
             user_agent = "feedfinder2/{0}".format(__version__)
@@ -39,7 +38,9 @@ class FeedFinder(object):
 
     def get_feed(self, url):
         try:
-            r = requests.get(url, headers={"User-Agent": self.user_agent}, timeout=self.timeout)
+            r = requests.get(
+                url, headers={"User-Agent": self.user_agent}, timeout=self.timeout
+            )
         except Exception as e:
             logging.warning("Error while getting '{0}'".format(url))
             logging.warning("{0}".format(e))
@@ -50,7 +51,7 @@ class FeedFinder(object):
         data = text.lower()
         if data.count("<html"):
             return False
-        return data.count("<rss")+data.count("<rdf")+data.count("<feed")
+        return data.count("<rss") + data.count("<rdf") + data.count("<feed")
 
     def is_feed(self, url):
         text = self.get_feed(url)
@@ -59,12 +60,10 @@ class FeedFinder(object):
         return self.is_feed_data(text)
 
     def is_feed_url(self, url):
-        return any(map(url.lower().endswith,
-                       [".rss", ".rdf", ".xml", ".atom"]))
+        return any(map(url.lower().endswith, [".rss", ".rdf", ".xml", ".atom"]))
 
     def is_feedlike_url(self, url):
-        return any(map(url.lower().count,
-                       ["rss", "rdf", "xml", "atom", "feed"]))
+        return any(map(url.lower().count, ["rss", "rdf", "xml", "atom", "feed"]))
 
 
 def find_feeds(url, check_all=False, user_agent=None, timeout=None):
@@ -87,11 +86,13 @@ def find_feeds(url, check_all=False, user_agent=None, timeout=None):
     tree = BeautifulSoup(text, "lxml")
     links = []
     for link in tree.find_all("link"):
-        if link.get("type") in ["application/rss+xml",
-                                "text/xml",
-                                "application/atom+xml",
-                                "application/x.atom+xml",
-                                "application/x-atom+xml"]:
+        if link.get("type") in [
+            "application/rss+xml",
+            "text/xml",
+            "application/atom+xml",
+            "application/x.atom+xml",
+            "application/x-atom+xml",
+        ]:
             links.append(urlparse.urljoin(url, link.get("href", "")))
 
     # Check the detected links.
@@ -113,15 +114,15 @@ def find_feeds(url, check_all=False, user_agent=None, timeout=None):
             remote.append(href)
 
     # Check the local URLs.
-    local = [urlparse.urljoin(url, l) for l in local]
-    urls += list(filter(finder.is_feed, local))
+    local_urls = [urlparse.urljoin(url, link) for link in local]
+    urls += list(filter(finder.is_feed, local_urls))
     logging.info("Found {0} local <a> links to feeds.".format(len(urls)))
     if len(urls) and not check_all:
         return sort_urls(urls)
 
     # Check the remote URLs.
-    remote = [urlparse.urljoin(url, l) for l in remote]
-    urls += list(filter(finder.is_feed, remote))
+    remote_urls = [urlparse.urljoin(url, link) for link in remote]
+    urls += list(filter(finder.is_feed, remote_urls))
     logging.info("Found {0} remote <a> links to feeds.".format(len(urls)))
     if len(urls) and not check_all:
         return sort_urls(urls)
@@ -137,22 +138,43 @@ def find_feeds(url, check_all=False, user_agent=None, timeout=None):
     # e.g., http://example.com/foo/bar.html -> http://example.com/foo/
     # e.g., http://example.com/foo/ -> http://example.com/foo/
     # e.g., http://example.com -> http://example.com/ (if it was coerced to http://example.com/)
-    # However, if url is http://example.com (no trailing slash), urljoin(url, ".") is http://example.com/
+    # However, if url is http://example.com (no trailing slash),
+    # urljoin(url, ".") is http://example.com/
     # and urljoin(url, "atom.xml") is http://example.com/atom.xml.
-    # If url is http://example.com/blog, urljoin(url, "atom.xml") is http://example.com/atom.xml (wrong!)
+    # If url is http://example.com/blog, urljoin(url, "atom.xml")
+    # is http://example.com/atom.xml (wrong!)
     # We need to ensure the base for relative leaf resolution is the actual directory.
-    # A common way to get the directory is to join with "./" or ensure url ends with "/" if it's path-like
+    # A common way to get the directory is to join with "./"
+    # or ensure url ends with "/" if it's path-like
 
-    current_dir_url = urlparse.urljoin(url, "./") # Ensures it's a directory
+    current_dir_url = urlparse.urljoin(url, "./")  # Ensures it's a directory
 
     leaf_filenames = [
-        "feed.xml", "atom.xml", "rss.xml", "feed", "rss", "atom",
-        "index.xml", "index.atom", "index.rss", "index.rdf",
-        "feed.json", "rss.json", "wp-rss2.xml", "feeds/posts/default",
-        "blog.xml"
+        "feed.xml",
+        "atom.xml",
+        "rss.xml",
+        "feed",
+        "rss",
+        "atom",
+        "index.xml",
+        "index.atom",
+        "index.rss",
+        "index.rdf",
+        "feed.json",
+        "rss.json",
+        "wp-rss2.xml",
+        "feeds/posts/default",
+        "blog.xml",
     ]
     common_root_subdirectories = [
-        "feed/", "feeds/", "rss/", "atom/", "blog/", "news/", "updates/", "comments/"
+        "feed/",
+        "feeds/",
+        "rss/",
+        "atom/",
+        "blog/",
+        "news/",
+        "updates/",
+        "comments/",
     ]
 
     guessed_urls = []
@@ -182,7 +204,9 @@ def find_feeds(url, check_all=False, user_agent=None, timeout=None):
     if unique_guessed_urls:
         logging.info("Trying {0} guessed URLs.".format(len(unique_guessed_urls)))
         urls += list(filter(finder.is_feed, unique_guessed_urls))
-        logging.info("Found {0} feeds through guessing.".format(len(urls))) # This count is cumulative, might be better to log count from this step
+        logging.info(
+            "Found {0} feeds through guessing.".format(len(urls))
+        )  # This count is cumulative, might be better to log count from this step
 
     return sort_urls(urls)
 
@@ -204,7 +228,7 @@ def sort_urls(feeds):
 
 
 if __name__ == "__main__":
-    print(find_feeds("www.preposterousuniverse.com/blog/", timeout = 1))
+    print(find_feeds("www.preposterousuniverse.com/blog/", timeout=1))
     print(find_feeds("www.preposterousuniverse.com/blog/"))
     print(find_feeds("http://xkcd.com"))
     print(find_feeds("dan.iel.fm/atom.xml"))
@@ -212,4 +236,3 @@ if __name__ == "__main__":
     print(find_feeds("kapadia.github.io"))
     print(find_feeds("blog.jonathansick.ca"))
     print(find_feeds("asdasd"))
-    
