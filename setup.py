@@ -19,7 +19,7 @@ setup(
     name="feedfinder2",
     version=feedfinder2.__version__,
     url="https://github.com/dfm/feedfinder2",
-    license={"file": "LICENSE"},
+    license="MIT",
     author="Dan Foreman-Mackey",
     author_email="foreman.mackey@gmail.com",
     description="Find the feed URLs for a website.",
