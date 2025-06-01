@@ -25,7 +25,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        uv sync --system-site-packages
+        uv sync
 
     - name: Lint with ruff
       run: |
