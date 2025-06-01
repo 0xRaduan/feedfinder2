@@ -3,3 +3,12 @@ build
 dist
 feedfinder2.egg-info
 __pycache__/
+
+# uv cache
+.uv_cache
+
+# ruff cache
+.ruff_cache
+
+# virtual environment
+.venv

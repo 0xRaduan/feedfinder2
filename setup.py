@@ -1,5 +1,6 @@
 import os
 import sys
+from setuptools import setup  # Moved to top
 
 if sys.argv[-1] == "publish":
     os.system("python setup.py sdist upload")
@@ -12,8 +13,7 @@ if sys.version_info[0] < 3:
 else:
     import builtins
 builtins.__FEEDFINDER2_SETUP__ = True
-import feedfinder2
-from setuptools import setup
+import feedfinder2  # noqa: E402
 
 setup(
     name="feedfinder2",
@@ -22,11 +22,6 @@ setup(
     license="MIT",
     author="Dan Foreman-Mackey",
     author_email="foreman.mackey@gmail.com",
-    install_requires=[
-        "six",
-        "requests",
-        "beautifulsoup4",
-    ],
     description="Find the feed URLs for a website.",
     long_description=open("README.rst").read(),
     py_modules=["feedfinder2"],
