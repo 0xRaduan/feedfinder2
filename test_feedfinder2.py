@@ -37,14 +37,14 @@ class TestFeedGuessing(unittest.TestCase):
     @patch('feedfinder2.requests.get')
     def test_guess_leaf_at_root(self, mock_get):
         mock_get.side_effect = self.mock_requests_get_logic
-        
+
         test_url = "http://example.com"
         feed_url = "http://example.com/atom.xml"
-        
+
         # Mock the main page and the feed page
         self.mock_responses[test_url] = self.html_content
         self.mock_responses[feed_url] = self.feed_content
-        
+
         # check_all=True forces guessing
         feeds = find_feeds(test_url, check_all=True)
         self.assertIn(feed_url, feeds)
@@ -53,13 +53,13 @@ class TestFeedGuessing(unittest.TestCase):
     @patch('feedfinder2.requests.get')
     def test_guess_leaf_in_subdir_relative_to_input(self, mock_get):
         mock_get.side_effect = self.mock_requests_get_logic
-        
+
         test_url = "http://example.com/blog/"
         feed_url = "http://example.com/blog/feed.xml"
-        
+
         self.mock_responses[test_url] = self.html_content
         self.mock_responses[feed_url] = self.feed_content
-        
+
         feeds = find_feeds(test_url, check_all=True)
         self.assertIn(feed_url, feeds)
         self.assertEqual(len(feeds), 1)
@@ -67,15 +67,15 @@ class TestFeedGuessing(unittest.TestCase):
     @patch('feedfinder2.requests.get')
     def test_guess_leaf_in_subdir_relative_to_input_no_trailing_slash(self, mock_get):
         mock_get.side_effect = self.mock_requests_get_logic
-        
+
         # Test URL without trailing slash, expecting feed relative to it as a directory
-        test_url = "http://example.com/blog" 
+        test_url = "http://example.com/blog"
         # feedfinder2.py's current_dir_url = urlparse.urljoin(url, "./") will make this http://example.com/blog/
-        feed_url = "http://example.com/blog/feed.xml" 
-        
+        feed_url = "http://example.com/blog/feed.xml"
+
         self.mock_responses[test_url] = self.html_content
         self.mock_responses[feed_url] = self.feed_content
-        
+
         feeds = find_feeds(test_url, check_all=True)
         self.assertIn(feed_url, feeds)
         self.assertEqual(len(feeds), 1)
@@ -83,16 +83,16 @@ class TestFeedGuessing(unittest.TestCase):
     @patch('feedfinder2.requests.get')
     def test_guess_leaf_in_common_root_subdir(self, mock_get):
         mock_get.side_effect = self.mock_requests_get_logic
-        
+
         test_url = "http://example.com"
         # Example: http://example.com/news/rss.xml
         # common_root_subdirectories = ["feed/", "feeds/", "rss/", "atom/", "blog/", "news/", "updates/"]
         # leaf_filenames = ["feed.xml", "atom.xml", "rss.xml", ...]
-        feed_url = "http://example.com/news/rss.xml" 
-        
+        feed_url = "http://example.com/news/rss.xml"
+
         self.mock_responses[test_url] = self.html_content
         self.mock_responses[feed_url] = self.feed_content
-        
+
         feeds = find_feeds(test_url, check_all=True)
         self.assertIn(feed_url, feeds)
         self.assertEqual(len(feeds), 1)
@@ -100,14 +100,14 @@ class TestFeedGuessing(unittest.TestCase):
     @patch('feedfinder2.requests.get')
     def test_guess_common_root_subdir_itself_as_feed(self, mock_get):
         mock_get.side_effect = self.mock_requests_get_logic
-        
+
         test_url = "http://example.com"
         # Example: http://example.com/feed/
-        feed_url = "http://example.com/feed/" 
-        
+        feed_url = "http://example.com/feed/"
+
         self.mock_responses[test_url] = self.html_content
         self.mock_responses[feed_url] = self.feed_content
-        
+
         feeds = find_feeds(test_url, check_all=True)
         self.assertIn(feed_url, feeds)
         self.assertEqual(len(feeds), 1)
@@ -115,26 +115,26 @@ class TestFeedGuessing(unittest.TestCase):
     @patch('feedfinder2.requests.get')
     def test_no_feeds_found_guessing_misses(self, mock_get):
         mock_get.side_effect = self.mock_requests_get_logic
-        
+
         test_url = "http://anotherdomain.com"
         self.mock_responses[test_url] = self.html_content
         # No other self.mock_responses entries means all guesses will get default html_content
-        
+
         feeds = find_feeds(test_url, check_all=True)
         self.assertEqual(len(feeds), 0)
 
     @patch('feedfinder2.requests.get')
     def test_guessing_with_check_all_true(self, mock_get):
         mock_get.side_effect = self.mock_requests_get_logic
-        
+
         test_url = "http://checkall.com"
         # leaf_filenames includes "wp-rss2.xml"
         feed_url = "http://checkall.com/wp-rss2.xml" # This is a leaf at root
-        
+
         # Main page has no links, so find_feeds would return [] if not for guessing
-        self.mock_responses[test_url] = self.html_content 
+        self.mock_responses[test_url] = self.html_content
         self.mock_responses[feed_url] = self.feed_content
-        
+
         feeds = find_feeds(test_url, check_all=True)
         self.assertIn(feed_url, feeds)
         self.assertEqual(len(feeds), 1)
@@ -160,7 +160,7 @@ class TestFeedGuessing(unittest.TestCase):
         feed_url_low_priority = "http://priority.com/feed.xml"  # p=2 (due to .xml)
         # If it was just /feed, it would be p=1.
         # If it was /blog/feed, also p=1.
-        
+
         # Let's use one that is clearly higher due to "atom" vs one with "comments"
         feed_url_good = "http://priority.com/atom.xml" # p=5
         feed_url_comments = "http://priority.com/comments/feed.xml" # p=-2 because of "comments"
@@ -171,9 +171,9 @@ class TestFeedGuessing(unittest.TestCase):
         self.mock_responses[test_url] = self.html_content
         self.mock_responses[feed_url_good] = self.feed_content
         self.mock_responses[feed_url_comments] = self.feed_content
-        
+
         feeds = find_feeds(test_url, check_all=True)
-        
+
         # We expect feed_url_good to be first.
         expected_order = [feed_url_good, feed_url_comments]
         self.assertEqual(feeds, expected_order)
@@ -181,15 +181,15 @@ class TestFeedGuessing(unittest.TestCase):
     @patch('feedfinder2.requests.get')
     def test_guess_leaf_jsonfeed_not_detected_by_default_is_feed_data(self, mock_get):
         mock_get.side_effect = self.mock_requests_get_logic
-        
+
         test_url = "http://jsonfeed.org"
         # leaf_filenames includes "feed.json"
         json_feed_url = "http://jsonfeed.org/feed.json"
-        
+
         self.mock_responses[test_url] = self.html_content
         # is_feed_data checks for "<rss", "<rdf", "<feed". A pure JSON feed won't have these.
         self.mock_responses[json_feed_url] = '{"version": "https://jsonfeed.org/version/1", "title": "My Example Feed"}'
-        
+
         feeds = find_feeds(test_url, check_all=True)
         # It should NOT find this feed because is_feed_data won't recognize it
         self.assertNotIn(json_feed_url, feeds)
@@ -199,10 +199,10 @@ class TestFeedGuessing(unittest.TestCase):
     @patch('feedfinder2.requests.get')
     def test_input_url_is_already_a_feed(self, mock_get):
         mock_get.side_effect = self.mock_requests_get_logic
-        
+
         feed_url = "http://example.com/directfeed.xml"
         self.mock_responses[feed_url] = self.feed_content
-        
+
         feeds = find_feeds(feed_url, check_all=True)
         self.assertEqual(feeds, [feed_url])
 
@@ -236,7 +236,7 @@ class TestFeedGuessing(unittest.TestCase):
 
         test_url = "http://example.com"
         linked_feed_url = "http://example.com/linkedfeed.rss"
-        guessed_feed_url = "http://example.com/atom.xml" 
+        guessed_feed_url = "http://example.com/atom.xml"
 
         page_with_link_tag = f'''
         <html><head>

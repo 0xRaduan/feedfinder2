@@ -132,7 +132,7 @@ def find_feeds(url, check_all=False, user_agent=None, timeout=None):
     scheme = parsed_url.scheme
     netloc = parsed_url.netloc
     root_url = "{0}://{1}/".format(scheme, netloc)
-    
+
     # urlparse.urljoin(url, ".") correctly gives the "directory" of the current URL
     # e.g., http://example.com/foo/bar.html -> http://example.com/foo/
     # e.g., http://example.com/foo/ -> http://example.com/foo/
@@ -142,7 +142,7 @@ def find_feeds(url, check_all=False, user_agent=None, timeout=None):
     # If url is http://example.com/blog, urljoin(url, "atom.xml") is http://example.com/atom.xml (wrong!)
     # We need to ensure the base for relative leaf resolution is the actual directory.
     # A common way to get the directory is to join with "./" or ensure url ends with "/" if it's path-like
-    
+
     current_dir_url = urlparse.urljoin(url, "./") # Ensures it's a directory
 
     leaf_filenames = [
@@ -174,10 +174,10 @@ def find_feeds(url, check_all=False, user_agent=None, timeout=None):
         base_subdir_url = urlparse.urljoin(root_url, subdir)
         for leaf in leaf_filenames:
             guessed_urls.append(urlparse.urljoin(base_subdir_url, leaf))
-            
+
     # Remove duplicates
     unique_guessed_urls = sorted(list(set(guessed_urls)))
-    
+
     # Filter and add to the main list
     if unique_guessed_urls:
         logging.info("Trying {0} guessed URLs.".format(len(unique_guessed_urls)))
