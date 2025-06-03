@@ -12,7 +12,6 @@ dependencies = [
     "beautifulsoup4>=4.12.2",
     "lxml>=5.4.0",
     "requests>=2.32.3",
-    "six>=1.17.0",
 ]
 
 [dependency-groups]

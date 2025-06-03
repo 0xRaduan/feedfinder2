@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function
 
 __version__ = "0.0.4"
 
@@ -16,7 +15,7 @@ if not __FEEDFINDER2_SETUP__:
     import logging
     import requests
     from bs4 import BeautifulSoup
-    from six.moves.urllib import parse as urlparse
+    import urllib.parse as urlparse
 
 
 def coerce_url(url):

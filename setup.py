@@ -8,10 +8,7 @@ if sys.argv[-1] == "publish":
 
 # Hackishly inject a constant into builtins to enable importing of the
 # package before the library is built.
-if sys.version_info[0] < 3:
-    import __builtin__ as builtins
-else:
-    import builtins
+import builtins
 builtins.__FEEDFINDER2_SETUP__ = True
 import feedfinder2  # noqa: E402
 
