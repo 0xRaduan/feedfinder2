@@ -1,22 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function
 
 __version__ = "0.0.4"
 
-try:
-    __FEEDFINDER2_SETUP__
-except NameError:
-    __FEEDFINDER2_SETUP__ = False
+__all__ = ["find_feeds"]
 
-if not __FEEDFINDER2_SETUP__:
-    __all__ = ["find_feeds"]
-
-    import logging
-    import requests
-    from bs4 import BeautifulSoup
-    from six.moves.urllib import parse as urlparse
+import logging
+import requests
+from bs4 import BeautifulSoup
+import urllib.parse as urlparse
 
 
 def coerce_url(url):
