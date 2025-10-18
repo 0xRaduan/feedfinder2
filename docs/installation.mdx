@@ -7,16 +7,34 @@ description: Install feedfinder2 with pip or uv
 
 Feedfinder2 requires Python 3.10 or higher.
 
-## With pip
-
-```bash
-pip install feedfinder2
-```
+<Note>
+This is a fork not yet published to PyPI. Install from GitHub using the methods below.
+</Note>
 
 ## With uv (Recommended)
 
 ```bash
-uv add feedfinder2
+uv add "feedfinder2 @ git+https://github.com/0xRaduan/feedfinder2.git"
+```
+
+Or add to your `pyproject.toml`:
+
+```toml
+dependencies = [
+    "feedfinder2 @ git+https://github.com/0xRaduan/feedfinder2.git",
+]
+```
+
+## With pip
+
+```bash
+pip install git+https://github.com/0xRaduan/feedfinder2.git
+```
+
+Or in `requirements.txt`:
+
+```
+feedfinder2 @ git+https://github.com/0xRaduan/feedfinder2.git
 ```
 
 ## From Source

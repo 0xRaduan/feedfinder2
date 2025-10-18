@@ -11,10 +11,32 @@ A complete rewrite of [dfm/feedfinder2](https://github.com/dfm/feedfinder2) with
 
 ## Installation
 
+> **Note**: This is a fork not yet published to PyPI. Install from GitHub:
+
+### With uv (Recommended)
+
 ```bash
-pip install feedfinder2
-# or
-uv add feedfinder2
+uv add "feedfinder2 @ git+https://github.com/0xRaduan/feedfinder2.git"
+```
+
+Or add to your `pyproject.toml`:
+
+```toml
+dependencies = [
+    "feedfinder2 @ git+https://github.com/0xRaduan/feedfinder2.git",
+]
+```
+
+### With pip
+
+```bash
+pip install git+https://github.com/0xRaduan/feedfinder2.git
+```
+
+Or in `requirements.txt`:
+
+```
+feedfinder2 @ git+https://github.com/0xRaduan/feedfinder2.git
 ```
 
 ## Quick Start
