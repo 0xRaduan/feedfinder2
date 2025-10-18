@@ -1,5 +1,8 @@
 # Feedfinder2
 
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 **Modern async RSS/Atom/JSON feed discovery for Python 3.10+**
 
 A complete rewrite of [dfm/feedfinder2](https://github.com/dfm/feedfinder2) with async support, concurrent requests, and enhanced feed format detection. Maintains 100% backward compatibility with the original API.
