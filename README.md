@@ -121,7 +121,7 @@ This is a full rewrite of Dan Foreman-Mackey's [feedfinder2](https://github.com/
 To compare sync vs async performance:
 
 ```bash
-python benchmark.py
+uv run python benchmark.py
 ```
 
 This will test both APIs against real websites and show:
