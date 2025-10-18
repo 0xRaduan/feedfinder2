@@ -116,6 +116,20 @@ This is a full rewrite of Dan Foreman-Mackey's [feedfinder2](https://github.com/
 - 20+ additional feed URL patterns
 - Type hints throughout
 
+## Running Benchmarks
+
+To compare sync vs async performance:
+
+```bash
+python benchmark.py
+```
+
+This will test both APIs against real websites and show:
+- Sync API performance (sequential)
+- Async API performance (sequential, one at a time)
+- Async API performance (concurrent, all at once)
+- Speedup comparisons
+
 ## License
 
 MIT License - see LICENSE file
