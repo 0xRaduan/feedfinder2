@@ -27,3 +27,16 @@ License
 -------
 
 Feedfinder2 is licensed under the MIT license (see LICENSE).
+
+Modern Python 3.10+ Fork
+------------------------
+
+A modern fork with async/await support and enhanced performance is available at
+`0xRaduan/feedfinder2 <https://github.com/0xRaduan/feedfinder2>`_. This fork
+maintains 100% backward compatibility while adding:
+
+- Async/await API with 3-5x performance improvement
+- Concurrent HTTP requests using httpx
+- JSON Feed standard support
+- Enhanced error handling with retry logic
+- Python 3.10+ with full type hints
