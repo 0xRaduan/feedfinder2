@@ -332,7 +332,8 @@ if not __FEEDFINDER2_SETUP__:
                     except httpx.TimeoutException:
                         if attempt < retries - 1:
                             logging.debug(
-                                f"Timeout on attempt {attempt + 1} for '{url}', retrying..."
+                                f"Timeout on attempt {attempt + 1} for "
+                                f"'{url}', retrying..."
                             )
                             await asyncio.sleep(
                                 0.5 * (attempt + 1)

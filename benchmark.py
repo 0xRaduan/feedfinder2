@@ -168,9 +168,8 @@ def main():
     print()
     print(f"Speedup (Async Sequential vs Sync): {sync_time / async_seq_time:.2f}x")
     print(f"Speedup (Async Concurrent vs Sync): {sync_time / async_time:.2f}x")
-    print(
-        f"Speedup (Async Concurrent vs Async Sequential): {async_seq_time / async_time:.2f}x"
-    )
+    speedup = async_seq_time / async_time
+    print(f"Speedup (Async Concurrent vs Async Sequential): {speedup:.2f}x")
     print()
     print("Note: The async concurrent version processes all URLs in parallel,")
     print("      while sync and async sequential process them one at a time.")
