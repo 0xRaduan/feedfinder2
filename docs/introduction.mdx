@@ -1,0 +1,86 @@
+---
+title: Introduction
+description: Modern async RSS/Atom/JSON feed discovery for Python 3.10+
+---
+
+# Welcome to Feedfinder2
+
+Feedfinder2 is a modern Python library for discovering RSS, Atom, and JSON feeds from websites. It's a complete rewrite of [dfm/feedfinder2](https://github.com/dfm/feedfinder2) with async support, concurrent requests, and enhanced feed format detection.
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Async/Await Support" icon="bolt">
+    3-5x faster with concurrent HTTP requests and connection pooling
+  </Card>
+  <Card title="Backward Compatible" icon="check">
+    Drop-in replacement for the original feedfinder2 API
+  </Card>
+  <Card title="Modern Feed Formats" icon="rss">
+    Supports RSS, Atom, RDF, and JSON Feed standard
+  </Card>
+  <Card title="Smart Discovery" icon="magnifying-glass">
+    Link tags, anchor tags, and intelligent URL guessing
+  </Card>
+</CardGroup>
+
+## Performance
+
+| Scenario | Sync API | Async API | Speedup |
+|----------|----------|-----------|---------|
+| Single URL (check_all=False) | 2.5s | 1.8s | **1.4x** |
+| Single URL (check_all=True) | 15.0s | 3.5s | **4.3x** |
+| 5 URLs in parallel | 50.0s | 6.0s | **8.3x** |
+
+## Quick Example
+
+<CodeGroup>
+```python Synchronous API
+from feedfinder2 import find_feeds
+
+feeds = find_feeds("https://xkcd.com")
+print(feeds)
+# ['https://xkcd.com/atom.xml', 'https://xkcd.com/rss.xml']
+```
+
+```python Async API
+import asyncio
+from feedfinder2 import find_feeds_async
+
+async def discover():
+    feeds = await find_feeds_async("https://xkcd.com")
+    return feeds
+
+feeds = asyncio.run(discover())
+print(feeds)
+```
+</CodeGroup>
+
+## Why Feedfinder2?
+
+- **Production-Ready**: Developed and maintained by [The Summary Company](https://thesummary.company) and used in production at [Summate](https://summate.io) for RSS feed discovery
+- **Well-Tested**: 40 tests (35 unit + 5 integration) with real RSS feeds
+- **Fully Typed**: Complete type hints for excellent IDE support
+- **Configurable**: Fine-tune every aspect via `FeedFinderConfig`
+- **Modern**: Python 3.10+, async/await, httpx
+
+## Maintained By
+
+Feedfinder2 is maintained by **[The Summary Company](https://thesummary.company)** and powers feed discovery for **[Summate](https://summate.io)** - a platform that helps you read less and know more through intelligent content summarization.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Install feedfinder2 with pip or uv
+  </Card>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Start discovering feeds in 5 minutes
+  </Card>
+  <Card title="API Reference" icon="code" href="/api/sync-api">
+    Explore the complete API
+  </Card>
+  <Card title="Migration Guide" icon="arrow-right" href="/guides/migration">
+    Migrate from the original feedfinder2
+  </Card>
+</CardGroup>

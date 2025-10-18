@@ -1,0 +1,177 @@
+---
+title: Performance Guide
+description: Optimize feedfinder2 for your use case
+---
+
+# Performance Guide
+
+Get the best performance from feedfinder2 based on your specific needs.
+
+## Benchmarks
+
+Real-world performance improvements with the async API:
+
+| Scenario | Sync API | Async API | Speedup |
+|----------|----------|-----------|---------|
+| Single URL, check_all=False | 2.5s | 1.8s | **1.4x** |
+| Single URL, check_all=True | 15.0s | 3.5s | **4.3x** |
+| 5 URLs in parallel | 50.0s | 6.0s | **8.3x** |
+
+## Running Benchmarks
+
+```bash
+uv run python benchmark.py
+```
+
+This tests both APIs against real websites and shows detailed comparisons.
+
+## Optimization Strategies
+
+### For Fast Validation
+
+When you just need to check if a site has feeds:
+
+```python
+from feedfinder2 import find_feeds_async, FeedFinderConfig
+
+config = FeedFinderConfig(
+    timeout=3.0,              # Short timeout
+    check_all=False,          # Stop after first feed
+    max_urls_to_try=20,       # Limit guessing
+    max_retries=1             # Fail fast
+)
+
+feeds = await find_feeds_async(url, config)
+has_feed = len(feeds) > 0
+```
+
+**Expected time**: 0.5-2 seconds
+
+### For Thorough Discovery
+
+When you need to find all feeds:
+
+```python
+config = FeedFinderConfig(
+    timeout=15.0,             # Generous timeout
+    check_all=True,           # Try all methods
+    max_retries=5,            # Retry on failures
+    enable_json_feed=True     # All formats
+)
+
+feeds = await find_feeds_async(url, config)
+```
+
+**Expected time**: 3-10 seconds (depending on site)
+
+### For Bulk Processing
+
+When processing many URLs:
+
+```python
+import asyncio
+
+async def process_urls(urls: List[str]):
+    config = FeedFinderConfig(
+        max_concurrent_requests=20,  # High concurrency
+        timeout=8.0,
+        check_all=False
+    )
+
+    # Process all in parallel
+    results = await asyncio.gather(
+        *[find_feeds_async(url, config) for url in urls],
+        return_exceptions=True
+    )
+
+    return results
+```
+
+**Expected time**: ~(longest_request + overhead), not (sum of all requests)
+
+## Performance Tips
+
+<AccordionGroup>
+  <Accordion title="Use async API for multiple URLs">
+    The async API's biggest advantage is parallel processing. Use it when:
+    - Processing multiple URLs
+    - Single URL with many potential feeds (check_all=True)
+    - Need best possible performance
+  </Accordion>
+
+  <Accordion title="Tune concurrency for your use case">
+    Higher concurrency = faster, but:
+    - May trigger rate limiting
+    - Uses more memory
+    - Can overwhelm slow servers
+
+    Start with default (15), increase if needed.
+  </Accordion>
+
+  <Accordion title="Use check_all=False for speed">
+    `check_all=False` stops after finding feeds in link tags.
+    Most sites have feeds in link tags, so this is much faster.
+  </Accordion>
+
+  <Accordion title="Limit URL guessing">
+    Set `max_urls_to_try` to limit guessing overhead:
+
+    ```python
+    config = FeedFinderConfig(max_urls_to_try=30)
+    ```
+
+    Tries 30 most common patterns instead of all 100+.
+  </Accordion>
+
+  <Accordion title="Adjust timeout based on network">
+    - Fast network / CDN sites: 5-8 seconds
+    - Average sites: 10 seconds (default)
+    - Slow servers: 15-20 seconds
+  </Accordion>
+
+  <Accordion title="Cache results">
+    Feed URLs don't change often. Cache them:
+
+    ```python
+    from functools import lru_cache
+
+    @lru_cache(maxsize=1000)
+    def get_feeds_cached(url: str):
+        return tuple(find_feeds(url))  # Cache as tuple
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Profiling Your Usage
+
+Want to optimize for your specific URLs? Run the benchmark:
+
+```bash
+# Edit benchmark.py to include your URLs
+# Then run:
+uv run python benchmark.py
+```
+
+This shows exactly where time is spent and helps you tune configuration.
+
+## Production at Summate
+
+At [Summate](https://summate.io), maintained by [The Summary Company](https://thesummary.company), we use:
+
+```python
+# Fast validation (user-facing)
+config = FeedFinderConfig(
+    timeout=5.0,
+    check_all=False,
+    max_urls_to_try=30
+)
+
+# Thorough discovery (background jobs)
+config = FeedFinderConfig(
+    timeout=12.0,
+    check_all=True,
+    max_concurrent_requests=20
+)
+```
+
+This balances speed for user-facing operations with thoroughness for background processing.

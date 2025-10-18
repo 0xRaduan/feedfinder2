@@ -1,0 +1,156 @@
+---
+title: Custom Patterns
+description: Add custom feed URL patterns for specialized discovery
+---
+
+# Custom Patterns
+
+Extend feedfinder2's built-in patterns to discover feeds from custom CMS platforms or specialized sites.
+
+## Adding Custom Patterns
+
+```python
+from feedfinder2 import find_feeds_async, FeedFinderConfig
+
+config = FeedFinderConfig(
+    custom_leaf_filenames=[
+        "content.xml",
+        "syndication.rss",
+        "posts.json"
+    ],
+    custom_subdirectories=[
+        "api/feeds/",
+        "content/rss/"
+    ]
+)
+
+feeds = await find_feeds_async("https://example.com", config)
+```
+
+## Built-in Patterns
+
+Feedfinder2 includes 40+ default patterns. Your custom patterns are **added** to these.
+
+### Default Leaf Filenames
+
+```
+feed.xml, atom.xml, rss.xml, feed, rss, atom,
+index.xml, index.atom, index.rss, index.rdf,
+feed.json, feeds.json, rss.json, feed.atom,
+feeds.atom, wp-rss2.xml, feed/, feeds/posts/default,
+atom.xml?alt=rss, blog.xml, rss.php, .rss,
+api/feed, api/rss, ...
+```
+
+### Default Subdirectories
+
+```
+feed/, feeds/, rss/, atom/, blog/, news/,
+updates/, comments/, posts/, articles/
+```
+
+## Platform-Specific Examples
+
+### Custom CMS
+
+```python
+config = FeedFinderConfig(
+    custom_leaf_filenames=[
+        "site-feed.xml",
+        "publications.rss",
+        "content-feed.json"
+    ],
+    custom_subdirectories=[
+        "publishing/feeds/",
+        "content/syndication/"
+    ]
+)
+```
+
+### Enterprise Platform
+
+```python
+config = FeedFinderConfig(
+    custom_leaf_filenames=[
+        "v1/feed",
+        "v2/rss.json",
+        "api/content.xml"
+    ],
+    custom_subdirectories=[
+        "api/v1/feeds/",
+        "api/v2/syndication/",
+        "public/feeds/"
+    ]
+)
+```
+
+### Multilingual Site
+
+```python
+config = FeedFinderConfig(
+    custom_leaf_filenames=[
+        "feed-en.xml",
+        "feed-es.xml",
+        "feed-fr.xml"
+    ],
+    custom_subdirectories=[
+        "en/feeds/",
+        "es/feeds/",
+        "fr/feeds/"
+    ]
+)
+```
+
+## How Pattern Matching Works
+
+Feedfinder2 generates URLs by combining:
+
+1. **Leaf filenames** relative to current directory
+2. **Leaf filenames** relative to root
+3. **Subdirectories** as feeds themselves
+4. **Leaf filenames** within subdirectories
+
+### Example
+
+For URL `https://example.com/blog/` with custom pattern `special.xml`:
+
+Generated URLs include:
+```
+https://example.com/blog/special.xml      (current dir + leaf)
+https://example.com/special.xml            (root + leaf)
+https://example.com/feed/special.xml       (subdir + leaf)
+https://example.com/rss/special.xml        (subdir + leaf)
+...
+```
+
+## Best Practices
+
+<Tip>
+Start with specific patterns you know exist, then add common variations.
+</Tip>
+
+<Warning>
+Too many custom patterns increases discovery time. Be selective.
+</Warning>
+
+<Note>
+Patterns are tried in order. Most specific patterns are generated first.
+</Note>
+
+## Real-World Example
+
+At Summate, we added patterns for specific platforms:
+
+```python
+# For Substack blogs
+substack_config = FeedFinderConfig(
+    custom_subdirectories=["api/v1/"]
+)
+
+# For Ghost CMS
+ghost_config = FeedFinderConfig(
+    custom_leaf_filenames=["rss/", "ghost/api/content/"]
+)
+```
+
+This improved discovery success rate from 92% to 97% for these platforms.

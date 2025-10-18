@@ -1,0 +1,73 @@
+{
+  "name": "Feedfinder2",
+  "logo": {
+    "light": "/logo/light.png",
+    "dark": "/logo/dark.png"
+  },
+  "favicon": "/favicon.png",
+  "colors": {
+    "primary": "#4A90E2",
+    "light": "#667EEA",
+    "dark": "#2C5AA0"
+  },
+  "topbarLinks": [
+    {
+      "name": "GitHub",
+      "url": "https://github.com/0xRaduan/feedfinder2"
+    }
+  ],
+  "topbarCtaButton": {
+    "name": "Get Started",
+    "url": "https://github.com/0xRaduan/feedfinder2#installation"
+  },
+  "anchors": [
+    {
+      "name": "GitHub",
+      "icon": "github",
+      "url": "https://github.com/0xRaduan/feedfinder2"
+    },
+    {
+      "name": "Summate",
+      "icon": "globe",
+      "url": "https://summate.io"
+    }
+  ],
+  "navigation": [
+    {
+      "group": "Getting Started",
+      "pages": [
+        "introduction",
+        "installation",
+        "quickstart"
+      ]
+    },
+    {
+      "group": "API Reference",
+      "pages": [
+        "api/sync-api",
+        "api/async-api",
+        "api/configuration"
+      ]
+    },
+    {
+      "group": "Guides",
+      "pages": [
+        "guides/migration",
+        "guides/performance",
+        "guides/production"
+      ]
+    },
+    {
+      "group": "Advanced",
+      "pages": [
+        "advanced/custom-patterns",
+        "advanced/error-handling",
+        "advanced/benchmarking"
+      ]
+    }
+  ],
+  "footerSocials": {
+    "github": "https://github.com/0xRaduan/feedfinder2",
+    "website": "https://summate.io"
+  }
+}

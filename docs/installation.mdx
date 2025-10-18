@@ -1,0 +1,78 @@
+---
+title: Installation
+description: Install feedfinder2 with pip or uv
+---
+
+# Installation
+
+Feedfinder2 requires Python 3.10 or higher.
+
+## With pip
+
+```bash
+pip install feedfinder2
+```
+
+## With uv (Recommended)
+
+```bash
+uv add feedfinder2
+```
+
+## From Source
+
+```bash
+git clone https://github.com/0xRaduan/feedfinder2.git
+cd feedfinder2
+uv sync
+```
+
+## Verify Installation
+
+```python
+import feedfinder2
+
+print(feedfinder2.__version__)
+# Output: 0.1.0
+```
+
+## Dependencies
+
+Feedfinder2 automatically installs:
+
+- **beautifulsoup4** - HTML parsing
+- **lxml** - Fast XML parsing
+- **requests** - Synchronous HTTP requests
+- **httpx** - Async HTTP requests
+- **six** - Python 2/3 compatibility utilities
+
+All dependencies are pinned to stable versions and regularly updated.
+
+## Development Installation
+
+For contributing or running tests:
+
+```bash
+git clone https://github.com/0xRaduan/feedfinder2.git
+cd feedfinder2
+
+# Install with test dependencies
+uv sync --group test
+
+# Run tests
+uv run pytest -v
+
+# Run benchmarks
+uv run python benchmark.py
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Start using feedfinder2 in 5 minutes
+  </Card>
+  <Card title="API Reference" icon="code" href="/api/sync-api">
+    Explore the complete API
+  </Card>
+</CardGroup>

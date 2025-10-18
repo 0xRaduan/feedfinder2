@@ -1,0 +1,207 @@
+---
+title: Configuration
+description: Complete reference for FeedFinderConfig options
+---
+
+# Configuration
+
+Configure feedfinder2 behavior with the `FeedFinderConfig` dataclass.
+
+## FeedFinderConfig
+
+```python
+from feedfinder2 import FeedFinderConfig
+
+config = FeedFinderConfig(
+    timeout=10.0,
+    max_retries=3,
+    user_agent=None,
+    max_concurrent_requests=15,
+    max_connections=100,
+    check_all=False,
+    max_urls_to_try=None,
+    custom_leaf_filenames=[],
+    custom_subdirectories=[],
+    enable_json_feed=True,
+    use_head_requests=True,
+    enable_retry_logic=True
+)
+```
+
+## HTTP Settings
+
+<ParamField path="timeout" type="float" default="10.0">
+  Request timeout in seconds. Applied to each HTTP request.
+</ParamField>
+
+<ParamField path="max_retries" type="int" default="3">
+  Number of retry attempts for failed requests (timeouts, network errors).
+</ParamField>
+
+<ParamField path="user_agent" type="str" default="feedfinder2/{version}">
+  Custom user agent string. If `None`, uses default `feedfinder2/0.1.0`.
+</ParamField>
+
+## Concurrency Settings (Async Only)
+
+<ParamField path="max_concurrent_requests" type="int" default="15">
+  Maximum number of concurrent HTTP requests. Controls parallelism level.
+
+  **Recommendations:**
+  - Low (5-10): Conservative, good for rate-limited sites
+  - Medium (15-20): Default, balanced performance
+  - High (30-50): Maximum speed, use carefully
+</ParamField>
+
+<ParamField path="max_connections" type="int" default="100">
+  Maximum HTTP connection pool size. Limits total open connections.
+</ParamField>
+
+## Discovery Settings
+
+<ParamField path="check_all" type="bool" default="False">
+  If `True`, try all discovery methods. If `False`, stop after finding feeds.
+
+  **Use `check_all=True` when:**
+  - You want to discover all possible feeds
+  - You need comprehensive coverage
+
+  **Use `check_all=False` when:**
+  - You just need one feed quickly
+  - Performance is critical
+</ParamField>
+
+<ParamField path="max_urls_to_try" type="int" default="None">
+  Limit number of guessed URLs to try. If `None`, tries all patterns.
+
+  Useful for limiting discovery time on large sites.
+</ParamField>
+
+## Custom Patterns
+
+<ParamField path="custom_leaf_filenames" type="List[str]" default="[]">
+  Additional filename patterns to try during URL guessing.
+
+  ```python
+  config = FeedFinderConfig(
+      custom_leaf_filenames=[
+          "custom-feed.xml",
+          "special/feed.json"
+      ]
+  )
+  ```
+</ParamField>
+
+<ParamField path="custom_subdirectories" type="List[str]" default="[]">
+  Additional subdirectory patterns to try during URL guessing.
+
+  ```python
+  config = FeedFinderConfig(
+      custom_subdirectories=[
+          "api/v1/feed/",
+          "content/feeds/"
+      ]
+  )
+  ```
+</ParamField>
+
+## Feature Flags
+
+<ParamField path="enable_json_feed" type="bool" default="True">
+  Enable JSON Feed format detection and validation.
+
+  Set to `False` to only discover XML-based feeds (RSS, Atom, RDF).
+</ParamField>
+
+<ParamField path="use_head_requests" type="bool" default="True">
+  Use HEAD requests before GET to check content-type.
+
+  **Note**: Currently not implemented. Reserved for future optimization.
+</ParamField>
+
+<ParamField path="enable_retry_logic" type="bool" default="True">
+  Enable retry logic with exponential backoff for failed requests.
+
+  Set to `False` to fail fast without retries.
+</ParamField>
+
+## Example Configurations
+
+### Fast Validation
+
+Quick check if a site has feeds:
+
+```python
+config = FeedFinderConfig(
+    timeout=3.0,
+    check_all=False,
+    max_urls_to_try=20,
+    max_retries=1
+)
+```
+
+### Thorough Discovery
+
+Find all possible feeds:
+
+```python
+config = FeedFinderConfig(
+    timeout=15.0,
+    check_all=True,
+    max_retries=5,
+    enable_json_feed=True
+)
+```
+
+### High Performance
+
+Maximum speed with many concurrent requests:
+
+```python
+config = FeedFinderConfig(
+    max_concurrent_requests=30,
+    timeout=8.0,
+    check_all=False,
+    max_urls_to_try=50
+)
+```
+
+### Custom Platform
+
+Discover feeds from custom CMS or platform:
+
+```python
+config = FeedFinderConfig(
+    custom_leaf_filenames=[
+        "content.xml",
+        "syndication.rss",
+        "posts.json"
+    ],
+    custom_subdirectories=[
+        "api/feeds/",
+        "content/rss/"
+    ]
+)
+```
+
+## Default Patterns
+
+### Built-in Leaf Filenames (40+ patterns)
+
+```python
+feed.xml, atom.xml, rss.xml, feed, rss, atom,
+index.xml, index.atom, index.rss, index.rdf,
+feed.json, feeds.json, rss.json, feed.atom,
+feeds.atom, wp-rss2.xml, feed/, feeds/posts/default,
+atom.xml?alt=rss, blog.xml, rss.php, index.rss,
+.rss, api/feed, api/rss, ...
+```
+
+### Built-in Subdirectories (10 patterns)
+
+```python
+feed/, feeds/, rss/, atom/, blog/, news/,
+updates/, comments/, posts/, articles/
+```
+
+Your custom patterns are **added** to these defaults, not replacing them.

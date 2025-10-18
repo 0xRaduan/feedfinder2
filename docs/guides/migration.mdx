@@ -1,0 +1,174 @@
+---
+title: Migration Guide
+description: Migrate from the original feedfinder2 or upgrade to async API
+---
+
+# Migration Guide
+
+## From Original feedfinder2
+
+The synchronous `find_feeds()` API is **100% backward compatible**. No changes needed.
+
+### Before (Original)
+
+```python
+from feedfinder2 import find_feeds
+
+feeds = find_feeds("https://example.com")
+```
+
+### After (This Version)
+
+```python
+from feedfinder2 import find_feeds
+
+feeds = find_feeds("https://example.com")  # Same exact code!
+```
+
+Your existing code works without any modifications.
+
+## Upgrading to Async API
+
+### Simple Migration
+
+Replace synchronous calls with async:
+
+<CodeGroup>
+```python Before (Sync)
+from feedfinder2 import find_feeds
+
+def discover(url):
+    return find_feeds(url)
+
+feeds = discover("https://example.com")
+```
+
+```python After (Async)
+import asyncio
+from feedfinder2 import find_feeds_async
+
+async def discover(url):
+    return await find_feeds_async(url)
+
+feeds = asyncio.run(discover("https://example.com"))
+```
+</CodeGroup>
+
+### With Configuration
+
+<CodeGroup>
+```python Before (Sync)
+feeds = find_feeds(
+    "https://example.com",
+    check_all=True,
+    timeout=10
+)
+```
+
+```python After (Async)
+from feedfinder2 import find_feeds_async, FeedFinderConfig
+
+config = FeedFinderConfig(
+    check_all=True,
+    timeout=10.0
+)
+feeds = await find_feeds_async("https://example.com", config)
+```
+</CodeGroup>
+
+## Production Migration at Summate
+
+This library is used in production at [Summate](https://summate.io) by [The Summary Company](https://thesummary.company). Here's how we migrated:
+
+### Phase 1: No Changes (Week 1)
+
+Keep existing sync API, deploy new version:
+
+```python
+# Existing code in common/integrations/rss.py
+@alru_cache(maxsize=100)
+def discover_rss_feed(url: str) -> List[str]:
+    return feedfinder2.find_feeds(url)  # No changes!
+```
+
+Benefits: Automatic retry logic and JSON Feed support.
+
+### Phase 2: New Code Uses Async (Week 2+)
+
+New features use async API:
+
+```python
+# New async endpoint
+async def validate_feed_url(url: str) -> bool:
+    config = FeedFinderConfig(timeout=5.0, check_all=False)
+    feeds = await find_feeds_async(url, config)
+    return len(feeds) > 0
+```
+
+### Phase 3: Gradual Migration (Optional)
+
+Migrate performance-critical paths to async as needed.
+
+## Common Patterns
+
+### Pattern 1: Cached Discovery
+
+<CodeGroup>
+```python Sync (Current)
+from functools import lru_cache
+
+@lru_cache(maxsize=100)
+def discover_cached(url: str):
+    return find_feeds(url)
+```
+
+```python Async (Future)
+from functools import lru_cache
+
+# Cache the coroutine, not the result
+async def discover_cached(url: str):
+    # Use external cache (Redis, etc.) for async
+    # or implement async-compatible caching
+    return await find_feeds_async(url)
+```
+</CodeGroup>
+
+### Pattern 2: Validation
+
+<CodeGroup>
+```python Sync
+def is_valid_feed_url(url: str) -> bool:
+    feeds = find_feeds(url, timeout=3.0)
+    return len(feeds) > 0
+```
+
+```python Async
+async def is_valid_feed_url(url: str) -> bool:
+    config = FeedFinderConfig(timeout=3.0, check_all=False)
+    feeds = await find_feeds_async(url, config)
+    return len(feeds) > 0
+```
+</CodeGroup>
+
+### Pattern 3: Bulk Discovery
+
+<CodeGroup>
+```python Sync
+def discover_many(urls: List[str]) -> Dict[str, List[str]]:
+    return {url: find_feeds(url) for url in urls}
+```
+
+```python Async (Much Faster)
+async def discover_many(urls: List[str]) -> Dict[str, List[str]]:
+    results = await asyncio.gather(
+        *[find_feeds_async(url) for url in urls]
+    )
+    return dict(zip(urls, results))
+```
+</CodeGroup>
+
+## Next Steps
+
+<Card title="Configuration Options" icon="sliders" href="/api/configuration">
+  Explore all available configuration options
+</Card>

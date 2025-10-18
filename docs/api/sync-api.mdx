@@ -1,0 +1,109 @@
+---
+title: Synchronous API
+description: Reference for the synchronous find_feeds() function
+---
+
+# Synchronous API
+
+The synchronous API provides the original feedfinder2 interface with backward compatibility.
+
+## find_feeds()
+
+Discover feed URLs from a website synchronously.
+
+```python
+from feedfinder2 import find_feeds
+
+feeds = find_feeds(
+    url="https://example.com",
+    check_all=False,
+    user_agent=None,
+    timeout=None
+)
+```
+
+### Parameters
+
+<ParamField path="url" type="string" required>
+  The website URL to search for feeds
+</ParamField>
+
+<ParamField path="check_all" type="boolean" default="False">
+  If `True`, try all discovery methods. If `False`, stop after finding feeds.
+</ParamField>
+
+<ParamField path="user_agent" type="string" default="feedfinder2/{version}">
+  Custom user agent string for HTTP requests
+</ParamField>
+
+<ParamField path="timeout" type="float" default="10.0">
+  Request timeout in seconds
+</ParamField>
+
+### Returns
+
+<ResponseField name="feeds" type="List[str]">
+  List of discovered feed URLs, sorted by relevance (highest priority first)
+</ResponseField>
+
+Returns an empty list if no feeds are found or if an error occurs.
+
+### Example
+
+```python
+from feedfinder2 import find_feeds
+
+# Basic usage
+feeds = find_feeds("https://xkcd.com")
+print(feeds)
+# ['https://xkcd.com/atom.xml', 'https://xkcd.com/rss.xml']
+
+# With all options
+feeds = find_feeds(
+    url="https://example.com",
+    check_all=True,
+    user_agent="MyBot/1.0",
+    timeout=5.0
+)
+```
+
+## Discovery Process
+
+The function follows this discovery process:
+
+1. **Direct Check**: Tests if the URL itself is a feed
+2. **Link Tags**: Parses `<link rel="alternate">` tags from HTML
+3. **Anchor Tags**: Finds feed-like links in `<a>` elements
+4. **Smart Guessing**: Tries common feed URL patterns
+
+If `check_all=False` (default), stops after finding feeds in any step. If `check_all=True`, tries all methods and returns all discovered feeds.
+
+## URL Sorting
+
+Discovered feeds are automatically sorted by relevance:
+
+**High Priority:**
+- URLs containing "atom", "rss", "rdf", ".xml", "feed"
+
+**Low Priority:**
+- URLs containing "comments" (score: -2)
+- URLs containing "georss" (score: -1)
+
+## Error Handling
+
+The function handles errors gracefully:
+
+- **Network errors**: Returns empty list, logs warning
+- **Timeouts**: Returns empty list after timeout
+- **Invalid URLs**: Returns empty list
+- **No feeds found**: Returns empty list
+
+No exceptions are raised during normal operation.
+
+## Performance Characteristics
+
+- **Sequential execution**: Processes URLs one at a time
+- **Session reuse**: Connection pooling via requests.Session
+- **Retry logic**: Up to 3 retry attempts on timeout (configurable)
+
+For better performance, use the [async API](/api/async-api).

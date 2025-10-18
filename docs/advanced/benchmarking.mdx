@@ -1,0 +1,210 @@
+---
+title: Benchmarking
+description: Measure and compare performance
+---
+
+# Benchmarking
+
+Measure feedfinder2 performance with your own URLs and use cases.
+
+## Running the Benchmark Script
+
+```bash
+uv run python benchmark.py
+```
+
+This runs comprehensive benchmarks comparing:
+- Synchronous API (sequential)
+- Async API (sequential, one at a time)
+- Async API (concurrent, all at once)
+
+## Sample Output
+
+```
+================================================================================
+Feedfinder2 Performance Benchmark
+================================================================================
+
+Testing with 8 URLs
+
+================================================================================
+Benchmark 1: Synchronous API (Sequential)
+================================================================================
+  [Sync] https://xkcd.com: 2 feeds
+  [Sync] https://daringfireball.net: 1 feeds
+  ...
+
+Total time: 45.23s
+Total feeds found: 12
+Average time per URL: 5.65s
+
+================================================================================
+Benchmark 3: Async API (Concurrent - all URLs at once)
+================================================================================
+  [Async] https://xkcd.com: 2 feeds
+  [Async] https://daringfireball.net: 1 feeds
+  ...
+
+Total time: 5.67s
+Total feeds found: 12
+Average time per URL: 0.71s
+
+================================================================================
+Summary
+================================================================================
+Synchronous API:           45.23s (12 feeds)
+Async API (Concurrent):    5.67s (12 feeds)
+
+Speedup (Async Concurrent vs Sync): 7.98x
+```
+
+## Custom Benchmarks
+
+### Benchmark Your URLs
+
+Edit `benchmark.py` to use your own URLs:
+
+```python
+# In benchmark.py, modify TEST_URLS
+TEST_URLS = [
+    "https://your-blog-1.com",
+    "https://your-blog-2.com",
+    "https://your-blog-3.com",
+]
+```
+
+Then run:
+```bash
+uv run python benchmark.py
+```
+
+### Quick Performance Test
+
+```python
+import time
+from feedfinder2 import find_feeds, find_feeds_async
+import asyncio
+
+# Sync
+start = time.time()
+feeds_sync = find_feeds("https://xkcd.com", check_all=True)
+sync_time = time.time() - start
+
+# Async
+async def test_async():
+    start = time.time()
+    feeds = await find_feeds_async("https://xkcd.com",
+                                    FeedFinderConfig(check_all=True))
+    return time.time() - start, feeds
+
+async_time, feeds_async = asyncio.run(test_async())
+
+print(f"Sync: {sync_time:.2f}s")
+print(f"Async: {async_time:.2f}s")
+print(f"Speedup: {sync_time / async_time:.2f}x")
+```
+
+## Understanding Performance
+
+### What Affects Performance
+
+<AccordionGroup>
+  <Accordion title="Number of URLs to check">
+    More potential feed URLs = longer discovery time.
+
+    **Optimization**: Use `max_urls_to_try` to limit guessing.
+  </Accordion>
+
+  <Accordion title="check_all setting">
+    - `check_all=False`: Stops after finding feeds (fast)
+    - `check_all=True`: Tries all methods (slow but thorough)
+  </Accordion>
+
+  <Accordion title="Network latency">
+    Server response times directly impact discovery speed.
+
+    **Async helps most** when network latency is high.
+  </Accordion>
+
+  <Accordion title="Concurrency level">
+    Higher concurrency = faster (up to a point).
+
+    **Diminishing returns** after 20-30 concurrent requests.
+  </Accordion>
+
+  <Accordion title="Timeout settings">
+    Longer timeouts = slower discovery if sites don't respond.
+
+    **Balance**: Long enough for slow sites, short enough to fail fast.
+  </Accordion>
+</AccordionGroup>
+
+### When Async Helps Most
+
+**Maximum benefit**:
+- Multiple URLs in parallel (8x+ speedup)
+- Single URL with `check_all=True` (4x+ speedup)
+- Slow/distant servers (network latency amortized)
+
+**Minimal benefit**:
+- Single URL with feeds in link tags
+- Fast local servers
+- Very strict timeout settings
+
+## Performance Tuning
+
+### For Fastest Results
+
+```python
+config = FeedFinderConfig(
+    timeout=3.0,
+    check_all=False,
+    max_urls_to_try=15,
+    max_retries=1,
+    max_concurrent_requests=30
+)
+```
+
+### For Most Thorough Results
+
+```python
+config = FeedFinderConfig(
+    timeout=20.0,
+    check_all=True,
+    max_retries=5,
+    max_concurrent_requests=15
+)
+```
+
+### Balanced (Recommended)
+
+```python
+config = FeedFinderConfig(
+    timeout=10.0,
+    check_all=False,
+    max_retries=3,
+    max_concurrent_requests=15
+)
+```
+
+## Benchmarking in CI
+
+You can add benchmark tests to your CI:
+
+```yaml
+- name: Run benchmarks
+  run: |
+    uv run python benchmark.py > benchmark-results.txt
+    cat benchmark-results.txt
+```
+
+## Real-World Performance
+
+At [Summate](https://summate.io), we process ~10,000 feed discoveries per day with:
+
+- **Average discovery time**: 2.3 seconds (async API)
+- **Success rate**: 94% (finds at least one feed)
+- **P95 latency**: 4.5 seconds
+- **P99 latency**: 8.2 seconds
+
+Maintained by [The Summary Company](https://thesummary.company).

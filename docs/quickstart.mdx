@@ -1,0 +1,165 @@
+---
+title: Quick Start
+description: Get started with feedfinder2 in 5 minutes
+---
+
+# Quick Start
+
+Get up and running with feedfinder2 in just a few lines of code.
+
+## Synchronous API
+
+The simplest way to discover feeds:
+
+```python
+from feedfinder2 import find_feeds
+
+# Discover feeds from a website
+feeds = find_feeds("https://xkcd.com")
+print(feeds)
+# Output: ['https://xkcd.com/atom.xml', 'https://xkcd.com/rss.xml']
+```
+
+### With Options
+
+```python
+# Try all discovery methods
+feeds = find_feeds("https://example.com", check_all=True)
+
+# Custom timeout
+feeds = find_feeds("https://example.com", timeout=5.0)
+
+# Custom user agent
+feeds = find_feeds("https://example.com", user_agent="MyBot/1.0")
+```
+
+## Async API
+
+For better performance with async/await:
+
+```python
+import asyncio
+from feedfinder2 import find_feeds_async, FeedFinderConfig
+
+async def discover_feeds():
+    # Simple usage
+    feeds = await find_feeds_async("https://xkcd.com")
+    return feeds
+
+# Run async function
+feeds = asyncio.run(discover_feeds())
+print(feeds)
+```
+
+### With Configuration
+
+```python
+from feedfinder2 import find_feeds_async, FeedFinderConfig
+
+async def discover_with_config():
+    config = FeedFinderConfig(
+        timeout=10.0,
+        max_concurrent_requests=20,
+        check_all=True,
+        enable_json_feed=True
+    )
+
+    feeds = await find_feeds_async("https://example.com", config)
+    return feeds
+
+feeds = asyncio.run(discover_with_config())
+```
+
+## Parallel Discovery
+
+Process multiple URLs concurrently:
+
+```python
+import asyncio
+from feedfinder2 import find_feeds_async, FeedFinderConfig
+
+async def discover_many():
+    urls = [
+        "https://blog1.example.com",
+        "https://blog2.example.com",
+        "https://blog3.example.com",
+    ]
+
+    config = FeedFinderConfig(max_concurrent_requests=15)
+
+    # Discover all in parallel
+    results = await asyncio.gather(
+        *[find_feeds_async(url, config) for url in urls]
+    )
+
+    # Map URLs to feeds
+    feeds_map = dict(zip(urls, results))
+    return feeds_map
+
+feeds_map = asyncio.run(discover_many())
+```
+
+## Common Patterns
+
+### Check if URL Has Feeds
+
+```python
+from feedfinder2 import find_feeds
+
+def has_feeds(url: str) -> bool:
+    """Check if a URL has discoverable feeds."""
+    feeds = find_feeds(url, timeout=5.0)
+    return len(feeds) > 0
+
+if has_feeds("https://example.com"):
+    print("Has RSS feeds!")
+```
+
+### Get Best Feed
+
+```python
+from feedfinder2 import find_feeds
+
+def get_best_feed(url: str) -> str | None:
+    """Get the highest-priority feed from a URL."""
+    feeds = find_feeds(url)
+    return feeds[0] if feeds else None
+
+best = get_best_feed("https://xkcd.com")
+print(f"Best feed: {best}")
+```
+
+### With Caching
+
+```python
+from functools import lru_cache
+from feedfinder2 import find_feeds
+
+@lru_cache(maxsize=100)
+def discover_cached(url: str):
+    """Cached feed discovery."""
+    return find_feeds(url)
+
+# First call: fetches from network
+feeds = discover_cached("https://example.com")
+
+# Second call: returns from cache
+feeds = discover_cached("https://example.com")  # Instant!
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="API Reference" icon="code" href="/api/sync-api">
+    Explore all available functions
+  </Card>
+  <Card title="Configuration" icon="sliders" href="/api/configuration">
+    Learn about all config options
+  </Card>
+  <Card title="Migration Guide" icon="arrow-right" href="/guides/migration">
+    Migrate from original feedfinder2
+  </Card>
+  <Card title="Benchmarking" icon="chart-line" href="/advanced/benchmarking">
+    Measure performance improvements
+  </Card>
+</CardGroup>

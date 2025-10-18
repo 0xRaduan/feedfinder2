@@ -1,0 +1,242 @@
+---
+title: Error Handling
+description: Handle errors gracefully in production
+---
+
+# Error Handling
+
+Feedfinder2 is designed to fail gracefully without raising exceptions during normal operation.
+
+## Default Behavior
+
+By default, feedfinder2 **never raises exceptions** for:
+- Network errors
+- Timeouts
+- Invalid URLs
+- HTTP errors (404, 500, etc.)
+
+Instead, it returns an empty list and logs warnings.
+
+## Sync API Errors
+
+```python
+from feedfinder2 import find_feeds
+
+feeds = find_feeds("https://invalid-url-12345.com")
+# Returns: []
+# Logs: WARNING - Error while getting 'https://invalid-url-12345.com'
+```
+
+### What Gets Logged
+
+- **WARNING**: Network errors, timeouts after retries
+- **DEBUG**: Individual retry attempts
+- **INFO**: Discovery progress (link tags found, guessing URLs, etc.)
+
+## Async API Errors
+
+```python
+from feedfinder2 import find_feeds_async
+
+feeds = await find_feeds_async("https://invalid-url-12345.com")
+# Returns: []
+# Logs: DEBUG - HTTP error while getting URL
+```
+
+### Error Types Handled
+
+<AccordionGroup>
+  <Accordion title="Timeout Errors">
+    **Behavior**: Retries with exponential backoff (default: 3 attempts)
+
+    ```python
+    # Attempt 1: Fails with timeout
+    # Wait 0.5s
+    # Attempt 2: Fails with timeout
+    # Wait 1.0s
+    # Attempt 3: Fails with timeout
+    # Returns: []
+    # Logs: WARNING - Timeout after 3 attempts
+    ```
+  </Accordion>
+
+  <Accordion title="HTTP Errors (404, 500, etc.)">
+    **Behavior**: Returns empty result immediately
+
+    ```python
+    # HTTP 404 Not Found
+    # Returns: []
+    # Logs: DEBUG - HTTP error while getting URL
+    ```
+  </Accordion>
+
+  <Accordion title="Connection Errors">
+    **Behavior**: Returns empty result, logs warning
+
+    ```python
+    # DNS resolution failed
+    # Connection refused
+    # SSL errors
+    # Returns: []
+    # Logs: WARNING - Error while getting URL
+    ```
+  </Accordion>
+
+  <Accordion title="Invalid Content">
+    **Behavior**: Skips invalid feeds, continues discovery
+
+    ```python
+    # URL returns HTML instead of feed
+    # is_feed_data() returns False
+    # Continues checking other URLs
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Custom Error Handling
+
+### Wrap with Try-Except
+
+For critical operations, add explicit error handling:
+
+```python
+import logging
+
+async def discover_with_logging(url: str):
+    try:
+        feeds = await find_feeds_async(url)
+
+        if not feeds:
+            logging.warning(f"No feeds found for {url}")
+            metrics.increment("feed_discovery.no_feeds")
+        else:
+            logging.info(f"Found {len(feeds)} feeds for {url}")
+            metrics.increment("feed_discovery.success")
+
+        return feeds
+
+    except Exception as e:
+        logging.error(f"Feed discovery failed for {url}: {e}")
+        metrics.increment(f"feed_discovery.error.{type(e).__name__}")
+        return []
+```
+
+### Parallel Discovery with Error Isolation
+
+```python
+import asyncio
+
+async def discover_many_safe(urls: List[str]):
+    """Discover feeds for many URLs, isolating errors."""
+
+    results = await asyncio.gather(
+        *[find_feeds_async(url) for url in urls],
+        return_exceptions=True  # Don't fail on single error
+    )
+
+    # Process results
+    feeds_map = {}
+    for url, result in zip(urls, results):
+        if isinstance(result, Exception):
+            logging.error(f"Error for {url}: {result}")
+            feeds_map[url] = []
+        else:
+            feeds_map[url] = result
+
+    return feeds_map
+```
+
+## Retry Configuration
+
+Control retry behavior:
+
+```python
+config = FeedFinderConfig(
+    max_retries=5,           # Try up to 5 times
+    enable_retry_logic=True  # Enable retries
+)
+
+# Or disable retries for fast-fail
+config = FeedFinderConfig(
+    max_retries=1,
+    enable_retry_logic=False
+)
+```
+
+## Production Logging
+
+At [Summate](https://summate.io), maintained by [The Summary Company](https://thesummary.company), we use structured logging:
+
+```python
+import structlog
+
+logger = structlog.get_logger()
+
+async def discover_with_structured_logs(url: str):
+    logger.info("feed_discovery_started", url=url)
+
+    try:
+        feeds = await find_feeds_async(url)
+
+        logger.info(
+            "feed_discovery_completed",
+            url=url,
+            feeds_count=len(feeds),
+            feeds=feeds
+        )
+
+        return feeds
+
+    except Exception as e:
+        logger.error(
+            "feed_discovery_failed",
+            url=url,
+            error=str(e),
+            error_type=type(e).__name__
+        )
+        return []
+```
+
+## Common Error Scenarios
+
+### Timeout on Slow Sites
+
+```python
+# Increase timeout for known-slow sites
+config = FeedFinderConfig(timeout=20.0)
+```
+
+### Rate Limiting
+
+If you hit rate limits (HTTP 429):
+
+```python
+# Reduce concurrency
+config = FeedFinderConfig(
+    max_concurrent_requests=5,
+    max_urls_to_try=20
+)
+```
+
+### Network Instability
+
+```python
+# More retries, longer timeout
+config = FeedFinderConfig(
+    max_retries=5,
+    timeout=15.0
+)
+```
+
+## Debugging
+
+Enable debug logging to see detailed discovery process:
+
+```python
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+
+feeds = find_feeds("https://example.com")
+# Shows: All URLs tried, responses, feed detection logic
+```

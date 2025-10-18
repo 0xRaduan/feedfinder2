@@ -1,0 +1,256 @@
+---
+title: Production Deployment
+description: Deploy feedfinder2 safely in production environments
+---
+
+# Production Deployment
+
+Guide for deploying feedfinder2 in production, based on real-world usage at [Summate](https://summate.io).
+
+## Deployment Strategy
+
+### Phase 1: Staging (Week 1)
+
+Deploy and test with production-like data:
+
+```python
+# Test with real URLs from your production system
+test_urls = [
+    "https://your-production-url-1.com",
+    "https://your-production-url-2.com",
+    # ... sample of real URLs
+]
+
+for url in test_urls:
+    old_feeds = old_feedfinder.find_feeds(url)
+    new_feeds = feedfinder2.find_feeds(url)
+
+    # Compare results
+    assert set(old_feeds) == set(new_feeds)
+```
+
+**Monitor:**
+- Feed discovery success rate
+- API latency
+- Error rates
+- Memory usage
+
+### Phase 2: Canary (Week 2)
+
+Deploy to 10% of production traffic:
+
+```python
+import random
+
+def discover_feeds(url: str):
+    # 10% use new version
+    if random.random() < 0.1:
+        return feedfinder2.find_feeds(url)
+    else:
+        return old_feedfinder.find_feeds(url)
+```
+
+**Track:**
+- Comparative success rates
+- Performance metrics
+- User-facing errors
+
+### Phase 3: Full Rollout (Week 3)
+
+Gradually increase to 100% after validating metrics.
+
+## Production Configuration
+
+### For User-Facing Operations
+
+Quick response times are critical:
+
+```python
+from feedfinder2 import find_feeds_async, FeedFinderConfig
+
+config = FeedFinderConfig(
+    timeout=5.0,              # Fast timeout
+    check_all=False,          # Stop early
+    max_urls_to_try=30,       # Limit guessing
+    max_retries=2             # Quick retry
+)
+
+feeds = await find_feeds_async(url, config)
+```
+
+### For Background Jobs
+
+Thoroughness over speed:
+
+```python
+config = FeedFinderConfig(
+    timeout=12.0,             # Generous timeout
+    check_all=True,           # Find all feeds
+    max_retries=5,            # Persistent retry
+    max_concurrent_requests=20  # High concurrency
+)
+
+feeds = await find_feeds_async(url, config)
+```
+
+## Error Handling
+
+### Basic Error Handling
+
+```python
+from feedfinder2 import find_feeds
+
+try:
+    feeds = find_feeds(url, timeout=5.0)
+    if not feeds:
+        logger.warning(f"No feeds found for {url}")
+except Exception as e:
+    logger.error(f"Feed discovery failed: {e}")
+    feeds = []
+```
+
+### Production Error Handling
+
+```python
+import asyncio
+from feedfinder2 import find_feeds_async, FeedFinderConfig
+
+async def discover_with_fallback(url: str):
+    config = FeedFinderConfig(timeout=8.0)
+
+    try:
+        feeds = await find_feeds_async(url, config)
+
+        if not feeds:
+            # Log but don't fail
+            logger.info(f"No feeds discovered for {url}")
+
+        return feeds
+
+    except asyncio.TimeoutError:
+        logger.warning(f"Feed discovery timeout for {url}")
+        return []
+    except Exception as e:
+        logger.error(f"Unexpected error for {url}: {e}")
+        return []
+```
+
+## Monitoring
+
+### Recommended Metrics
+
+Track these in your production system:
+
+```python
+# Success rate
+metrics.increment('feed_discovery.success' if feeds else 'feed_discovery.no_feeds')
+
+# Latency
+with metrics.timer('feed_discovery.duration'):
+    feeds = await find_feeds_async(url)
+
+# Feed count distribution
+metrics.histogram('feed_discovery.count', len(feeds))
+
+# Error types
+try:
+    feeds = await find_feeds_async(url)
+except Exception as e:
+    metrics.increment(f'feed_discovery.error.{type(e).__name__}')
+```
+
+### Alert Thresholds
+
+Based on Summate's production usage:
+
+- **Error rate > 5%**: Investigate
+- **No feeds found > 30%**: Check if URLs are valid blog sites
+- **P95 latency > 15s**: Check timeout configuration
+- **Timeout rate > 10%**: Increase timeout or check network
+
+## Caching Strategy
+
+Feeds don't change often. Cache them:
+
+```python
+from functools import lru_cache
+
+@lru_cache(maxsize=1000)
+def get_feeds_cached(url: str):
+    return tuple(find_feeds(url))
+
+# Or with Redis/external cache
+async def get_feeds_redis_cached(url: str):
+    cached = await redis.get(f"feeds:{url}")
+    if cached:
+        return json.loads(cached)
+
+    feeds = await find_feeds_async(url)
+    await redis.setex(f"feeds:{url}", 86400, json.dumps(feeds))  # 24h TTL
+    return feeds
+```
+
+## Resource Management
+
+### Memory
+
+Feed discovery is memory-efficient:
+- ~1-5 MB per concurrent request
+- BeautifulSoup parses HTML incrementally
+- No large data structures accumulated
+
+**Recommendation**: Monitor memory with high concurrency (50+ requests).
+
+### Network
+
+With default settings (15 concurrent requests):
+- ~15 HTTP connections per discovery operation
+- Connection pooling reduces overhead
+- Automatic retry on transient failures
+
+**Recommendation**: Respect target servers - don't set concurrency too high.
+
+## Rollback Plan
+
+If issues occur:
+
+1. **Immediate**: Revert dependency version
+   ```toml
+   feedfinder2 = "==0.0.9"  # Previous version
+   ```
+
+2. **Monitor**: Check if issues resolve
+
+3. **Investigate**: Review logs, errors, performance metrics
+
+## Production Checklist
+
+<AccordionGroup>
+  <Accordion title="Pre-Deployment">
+    - [ ] Test with production URL samples
+    - [ ] Validate results match expectations
+    - [ ] Run benchmarks with your data
+    - [ ] Check dependency compatibility
+    - [ ] Review configuration for your use case
+  </Accordion>
+
+  <Accordion title="During Deployment">
+    - [ ] Deploy to staging first
+    - [ ] Run integration tests
+    - [ ] Monitor error rates
+    - [ ] Check performance metrics
+    - [ ] Validate feed discovery results
+  </Accordion>
+
+  <Accordion title="Post-Deployment">
+    - [ ] Monitor for 24-48 hours
+    - [ ] Compare metrics with baseline
+    - [ ] Check user-facing errors
+    - [ ] Verify no new timeout issues
+    - [ ] Confirm performance improvements
+  </Accordion>
+</AccordionGroup>
+
+## About
+
+Feedfinder2 is developed and maintained by **[The Summary Company](https://thesummary.company)** and powers feed discovery for **[Summate](https://summate.io)**.
