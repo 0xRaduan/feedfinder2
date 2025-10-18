@@ -87,8 +87,8 @@ def test_sort_urls_prioritizes_by_score():
     """Test that sort_urls prioritizes higher-scored URLs."""
     urls = [
         "http://example.com/comments/feed",  # score: -2
-        "http://example.com/atom.xml",       # score: positive (atom)
-        "http://example.com/feed",            # score: positive (feed)
+        "http://example.com/atom.xml",  # score: positive (atom)
+        "http://example.com/feed",  # score: positive (feed)
     ]
     result = sort_urls(urls)
 
@@ -165,7 +165,9 @@ def test_feedfinder_is_feed_data_rss():
 def test_feedfinder_is_feed_data_atom():
     """Test FeedFinder.is_feed_data() with Atom content."""
     finder = FeedFinder()
-    atom_content = '<feed xmlns="http://www.w3.org/2005/Atom"><title>Test</title></feed>'
+    atom_content = (
+        '<feed xmlns="http://www.w3.org/2005/Atom"><title>Test</title></feed>'
+    )
 
     assert finder.is_feed_data(atom_content) is True
 
@@ -173,7 +175,9 @@ def test_feedfinder_is_feed_data_atom():
 def test_feedfinder_is_feed_data_rdf():
     """Test FeedFinder.is_feed_data() with RDF content."""
     finder = FeedFinder()
-    rdf_content = '<rdf:RDF xmlns:rdf="..."><channel><title>Test</title></channel></rdf:RDF>'
+    rdf_content = (
+        '<rdf:RDF xmlns:rdf="..."><channel><title>Test</title></channel></rdf:RDF>'
+    )
 
     assert finder.is_feed_data(rdf_content) is True
 

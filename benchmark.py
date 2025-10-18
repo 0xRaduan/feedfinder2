@@ -52,7 +52,9 @@ def benchmark_sync(urls: List[str], timeout: float = 10.0) -> tuple[float, int]:
     return elapsed, total_feeds
 
 
-async def benchmark_async(urls: List[str], config: FeedFinderConfig) -> tuple[float, int]:
+async def benchmark_async(
+    urls: List[str], config: FeedFinderConfig
+) -> tuple[float, int]:
     """
     Benchmark async feed finding.
 
@@ -166,7 +168,9 @@ def main():
     print()
     print(f"Speedup (Async Sequential vs Sync): {sync_time / async_seq_time:.2f}x")
     print(f"Speedup (Async Concurrent vs Sync): {sync_time / async_time:.2f}x")
-    print(f"Speedup (Async Concurrent vs Async Sequential): {async_seq_time / async_time:.2f}x")
+    print(
+        f"Speedup (Async Concurrent vs Async Sequential): {async_seq_time / async_time:.2f}x"
+    )
     print()
     print("Note: The async concurrent version processes all URLs in parallel,")
     print("      while sync and async sequential process them one at a time.")

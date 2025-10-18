@@ -31,7 +31,6 @@ if not __FEEDFINDER2_SETUP__:
     import requests
     from bs4 import BeautifulSoup
 
-
     # Configuration dataclass for customization
     @dataclass
     class FeedFinderConfig:
@@ -65,7 +64,6 @@ if not __FEEDFINDER2_SETUP__:
                 return f"feedfinder2/{__version__}"
             return self.user_agent
 
-
     def coerce_url(url: str) -> str:
         """Normalize URL to use http/https protocol."""
         url = url.strip()
@@ -75,7 +73,6 @@ if not __FEEDFINDER2_SETUP__:
             if url.startswith(proto):
                 return url
         return f"http://{url}"
-
 
     # Enhanced feed patterns with modern formats
     DEFAULT_LEAF_FILENAMES = [
@@ -126,7 +123,6 @@ if not __FEEDFINDER2_SETUP__:
         "articles/",
     ]
 
-
     class FeedFinder:
         """Synchronous feed finder (legacy API)."""
 
@@ -160,7 +156,9 @@ if not __FEEDFINDER2_SETUP__:
                     return response.text
                 except requests.Timeout:
                     if attempt < retries - 1:
-                        logging.debug(f"Timeout on attempt {attempt + 1} for '{url}', retrying...")
+                        logging.debug(
+                            f"Timeout on attempt {attempt + 1} for '{url}', retrying..."
+                        )
                         continue
                     logging.warning(f"Timeout after {retries} attempts for '{url}'")
                     return None
@@ -211,7 +209,6 @@ if not __FEEDFINDER2_SETUP__:
             lower_url = url.lower()
             keywords = ["rss", "rdf", "xml", "atom", "feed", "json"]
             return any(keyword in lower_url for keyword in keywords)
-
 
     def _is_feed_data_impl(
         text: str, content_type: Optional[str], enable_json_feed: bool
@@ -272,7 +269,6 @@ if not __FEEDFINDER2_SETUP__:
         feed_markers = ["<rss", "<rdf", "<feed"]
         return any(marker in data_lower for marker in feed_markers)
 
-
     class AsyncFeedFinder:
         """Async feed finder with concurrent request support."""
 
@@ -320,7 +316,9 @@ if not __FEEDFINDER2_SETUP__:
                 Tuple of (response text or None, content-type or None)
             """
             if not self.client or not self._semaphore:
-                raise RuntimeError("AsyncFeedFinder must be used as async context manager")
+                raise RuntimeError(
+                    "AsyncFeedFinder must be used as async context manager"
+                )
 
             retries = self.config.max_retries if self.config.enable_retry_logic else 1
 
@@ -336,7 +334,9 @@ if not __FEEDFINDER2_SETUP__:
                             logging.debug(
                                 f"Timeout on attempt {attempt + 1} for '{url}', retrying..."
                             )
-                            await asyncio.sleep(0.5 * (attempt + 1))  # exponential backoff
+                            await asyncio.sleep(
+                                0.5 * (attempt + 1)
+                            )  # exponential backoff
                             continue
                         logging.warning(f"Timeout after {retries} attempts for '{url}'")
                         return None, None
@@ -387,7 +387,6 @@ if not __FEEDFINDER2_SETUP__:
             lower_url = url.lower()
             keywords = ["rss", "rdf", "xml", "atom", "feed", "json"]
             return any(keyword in lower_url for keyword in keywords)
-
 
     def _generate_guessed_urls(
         url: str, config: FeedFinderConfig
@@ -442,7 +441,6 @@ if not __FEEDFINDER2_SETUP__:
 
         return leaf_filenames, unique_guessed_urls
 
-
     def url_feed_prob(url: str) -> int:
         """
         Calculate feed probability score for URL sorting.
@@ -469,7 +467,6 @@ if not __FEEDFINDER2_SETUP__:
 
         return 0
 
-
     def sort_urls(feeds: List[str]) -> List[str]:
         """
         Sort and deduplicate feed URLs by priority.
@@ -481,7 +478,6 @@ if not __FEEDFINDER2_SETUP__:
             Sorted, deduplicated list of feed URLs
         """
         return sorted(list(set(feeds)), key=url_feed_prob, reverse=True)
-
 
     # Synchronous API (backward compatible)
     def find_feeds(
@@ -590,7 +586,6 @@ if not __FEEDFINDER2_SETUP__:
 
         return sort_urls(urls)
 
-
     # Async API (new)
     async def find_feeds_async(
         url: str,
@@ -679,7 +674,9 @@ if not __FEEDFINDER2_SETUP__:
                 local_checks = await asyncio.gather(
                     *[finder.is_feed(u) for u in local_urls]
                 )
-                new_feeds = [u for u, is_feed in zip(local_urls, local_checks) if is_feed]
+                new_feeds = [
+                    u for u, is_feed in zip(local_urls, local_checks) if is_feed
+                ]
                 urls.extend(new_feeds)
                 logging.info(f"Found {len(urls)} local <a> links to feeds.")
                 if urls and not config.check_all:

@@ -58,9 +58,9 @@ async def test_async_parallel_discovery():
 
     # Discover all in parallel
     import asyncio
+
     results = await asyncio.gather(
-        *[find_feeds_async(url, config) for url in urls],
-        return_exceptions=True
+        *[find_feeds_async(url, config) for url in urls], return_exceptions=True
     )
 
     # Both should find feeds (or at least not error)
